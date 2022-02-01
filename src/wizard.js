@@ -19,9 +19,9 @@ class Wizard {
             wz_button: (args != undefined && args.hasOwnProperty("wz_button")) ? args.wz_button : ".wizard-btn",
             wz_step: (args != undefined && args.hasOwnProperty("wz_step")) ? args.wz_step : ".wizard-step",
             wz_form: (args != undefined && args.hasOwnProperty("wz_form")) ? args.wz_form : ".wizard-form",
-            wz_next: (args != undefined && args.hasOwnProperty("next")) ? args.wz_next : ".next",
-            wz_prev: (args != undefined && args.hasOwnProperty("prev")) ? args.wz_prev : ".prev",
-            wz_finish: (args != undefined && args.hasOwnProperty("prev")) ? args.wz_prev : ".finish",
+            wz_next: (args != undefined && args.hasOwnProperty("wz_next")) ? args.wz_next : ".next",
+            wz_prev: (args != undefined && args.hasOwnProperty("wz_prev")) ? args.wz_prev : ".prev",
+            wz_finish: (args != undefined && args.hasOwnProperty("wz_finish")) ? args.wz_prev : ".finish",
 
             current_step: (args != undefined && args.hasOwnProperty("current_step")) ? args.current_step : 0,
             steps: (args != undefined && args.hasOwnProperty("steps")) ? args.steps : 0,
@@ -30,6 +30,9 @@ class Wizard {
             next: (args != undefined && args.hasOwnProperty("next")) ? args.next : "Next",
             prev: (args != undefined && args.hasOwnProperty("prev")) ? args.prev : "Prev",
             finish: (args != undefined && args.hasOwnProperty("finish")) ? args.finish : "Submit",
+
+            blink: (args != undefined && args.hasOwnProperty("blink")) ? args.blink : true,
+            wz_step_color: (args != undefined && args.hasOwnProperty("wz_step_color")) ? args.wz_step_color : "#fff",
 
             is_form: (args != undefined && args.hasOwnProperty("is_form")) ? args.is_form : false
         };
@@ -55,7 +58,12 @@ class Wizard {
         this.next = opts.next;
         this.finish = opts.finish;
         this.form = false;
-        this.is_form = false;
+        this.is_form = opts.is_form;
+
+        this.blink = opts.blink;
+        this.wz_step_color = opts.wz_step_color;
+        console.log("this.wz_step_color", this.wz_step_color)
+
     }
 
     init() {
@@ -71,6 +79,7 @@ class Wizard {
             let wz_type = (typeof wz.getAttribute("data-type") !== 'undefined' && wz.getAttribute("data-type") !== false) ? wz.getAttribute("data-type") : "default";
 
             var wz_nav_steps = $_.getSelectorAll(this.wz_step, wz_nav);
+
             var wz_nav_steps_length = (wz_nav_steps.length > 0) ? wz_nav_steps.length : $_.throwException(error_list.empty_nav);;
 
             var wz_content_steps = $_.getSelectorAll(this.wz_step, wz_content);
@@ -90,6 +99,19 @@ class Wizard {
 
             this.set(wz_nav_steps, wz_content_steps, wz_type)
 
+            
+        // var elements = document.querySelectorAll(".wizard-nav .wizard-step");
+        // console.log("elements", elements)
+        // for(var i = 0; i < elements.length; i++){
+        //     console.log(elements[i])
+        //     console.log(elements[i].className.toString)
+        //     let position = elements[i].className.toString.indexOf("/active/");
+        //     console.log(position)
+        //     if(position != -1){
+        //         elements[i].style.backgroundColor = this.wz_step_color;
+        //     }
+        // }
+
             switch (this.navigation) {
                 case "all":
                 case "nav":
@@ -102,7 +124,7 @@ class Wizard {
                     break;
             }
 
-            wz.style.display = "block"
+            wz.style.display = "block";
 
         } catch (error) {
             throw error;
@@ -139,7 +161,10 @@ class Wizard {
 
         $_.getSelector(this.wz_nav).classList.add(this.wz_nav_style);
 
-        if (this.form || this.is_form) {
+        $_.getSelector(this.wz_nav).classList.add(this.wz_nav_style);
+
+        // if (this.form || this.is_form) {
+        if (this.is_form) {
             this.update2Form();
         }
 
@@ -174,10 +199,10 @@ class Wizard {
         let target = steps[this.getCurrentStep()];
         var validation = false;
 
-        let inputs = $_.getSelectorAll("input,textarea,select", target);
+        let inputs = $_.getSelectorAll("input,textarea,select,div", target);
 
         if (inputs.length > 0) {
-            validation = $_.formValidator(inputs);
+            validation = $_.formValidator(inputs, this.blink);
         } else {
             this.throwException(error_list.random);
         }
@@ -284,15 +309,16 @@ class Wizard {
 
         switch (type) {
             case "form":
-                if (this.checkForm() === true) {
-                    this.last_step = this.getCurrentStep();
-                    if (this.getCurrentStep() < step) {
-                        return false;
+                if (this.is_form){
+                    if (this.checkForm() === true) {
+                        this.last_step = this.getCurrentStep();
+                        if (this.getCurrentStep() < step) {
+                            return false;
+                        }
                     }
+                    break;
                 }
-                break;
         }
-
 
         if ($_.str2bool(step)) {
             this.setCurrentStep(step)
@@ -419,6 +445,7 @@ var $_ = {
     },
 
     getSelectorAll: function (e, n = document) {
+        console.log("getSelectorAll", e, n)
         return n.querySelectorAll(e);
     },
 
@@ -508,12 +535,13 @@ var $_ = {
         throw message + ' \n' + aux;
     },
 
-    formValidator: function (formData) {
+    formValidator: function (formData, blink) {
         var error = false;
         for (let e of formData) {
             if ($_.hasClass(e, "required") || $_.exists(e.getAttribute("required"))) {
 
                 var check = false
+				console.log(e.tagName)
                 switch (e.tagName) {
                     case "INPUT":
                         check = $_.dispatchInput(e);
@@ -526,8 +554,9 @@ var $_ = {
 
                 if (check === false) {
                     error = true;
-                    console.log(e);
-                    $_.highlight(e, "error");
+                    $_.highlight(e, "error", blink);
+                }else{
+                    $_.highlight(e, "valid", blink);
                 }
             }
         }
@@ -535,21 +564,33 @@ var $_ = {
         return error;
     },
 
-    highlight: function (e, highlight = "error") {
+    highlight: function (e, highlight = "error", blink) {
         let classHigh = "highlight-" + highlight
+        e.classList.add(classHigh);
 
-        e.classList.add(classHigh)
-        setTimeout(function () {
-            document.querySelectorAll('[class*="highlight"]')
-                .forEach((el) => {
-                    for (let i = el.classList.length - 1; i >= 0; i--) {
-                        let className = el.classList[i];
-                        if (className.startsWith('highlight')) {
-                            el.classList.remove(className);
+        var querycurrent = document.querySelectorAll(".choices");
+        loop = 0;
+        querycurrent.forEach(function(userItem) {
+            var choices__input = userItem.querySelectorAll(".choices__input");
+            if(choices__input[0].id == e.id){
+                querycurrent[loop].classList.add(classHigh);
+            }
+            loop += 1;
+        });
+
+        if(blink){
+            setTimeout(function () {
+                document.querySelectorAll('[class*="highlight"]')
+                    .forEach((el) => {
+                        for (let i = el.classList.length - 1; i >= 0; i--) {
+                            let className = el.classList[i];
+                            if (className.startsWith('highlight')) {
+                                el.classList.remove(className);
+                            }
                         }
-                    }
-                });
-        }, 1000);
+                    });
+            }, 1000);
+        }
 
     },
 
