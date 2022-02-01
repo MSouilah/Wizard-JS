@@ -26,7 +26,8 @@ let args = {
 	"wz_nav_style": "dots",
 	"buttons": true,
 	"navigation": 'buttons',
-	"finish": "Save!"
+	"finish": "Save!",
+	"blink": true,
 };
 
 const wizard = new Wizard(args);
