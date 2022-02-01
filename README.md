@@ -57,8 +57,7 @@ Options allowing to modify the behavior and actions
 | `next`         | String | Next             | Next button text |
 | `prev`         | String | Prev             | Prev button text |
 | `finish`       | String | Submit           | Finish button text |
-| `is_form`      | Bool   | false            | Defines whether the wizard will act as a form |
-
+| `blink`        | Bool   | true             | Way of highlight appear: link or persistent |
 
 ## HTML Tags
 - Define the step type as a form, to validate the fields marked as required and change the wizard to form in case it is not defined.
